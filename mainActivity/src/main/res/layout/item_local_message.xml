@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="end" >
+
+    <TextView
+        android:id="@+id/textViewMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:autoLink="all"
+        android:background="@drawable/bubble_green"
+        android:gravity="center"
+        android:linksClickable="true"
+        android:text="a"
+        android:textIsSelectable="true" />
+
+</FrameLayout>

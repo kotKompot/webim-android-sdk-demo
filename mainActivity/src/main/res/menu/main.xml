@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_refresh"
+        android:icon="@android:drawable/ic_popup_sync"
+        android:title="@string/close"
+        app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/action_discard"
+        android:icon="@android:drawable/ic_menu_delete"
+        android:title="@string/close"
+        app:showAsAction="ifRoom"/>
+
+</menu>
