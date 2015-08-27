@@ -76,7 +76,7 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
         ListView listViewChat = (ListView) v.findViewById(R.id.listViewChat);
         listViewChat.setEmptyView(createEmptyTextView(listViewChat));
 
-        mMessagesAdapter = new MessagesAdapter(getActivity(), mMessages, mWMSession.getAccountName());
+        mMessagesAdapter = new MessagesAdapter(getActivity(), mMessages, mWMSession.getUrl());
         listViewChat.setAdapter(mMessagesAdapter);
         mMessagesAdapter.notifyDataSetChanged();
 

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import ru.webim.android.items.WMMessage;
 import ru.webim.android.items.WMMessage.WMMessageKind;
 import ru.webim.android.sdk.WMOfflineSession;
+import ru.webim.android.sdk.WMSession;
 import ru.webim.demo.client.R;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +22,8 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
 
 import org.json.JSONException;
 
@@ -44,7 +47,17 @@ public class MessagesAdapter extends BaseAdapter {
 		
 		View view = mInflater.inflate(layoutId, parent, false);
 		TextView messageTextView = (TextView) view.findViewById(R.id.textViewMessage);
-		
+
+		ImageView avatar = (ImageView) view.findViewById(R.id.imageAvatar);
+		if (avatar != null && currentItem.getSenderAvatarUrl() != null){
+			avatar.setVisibility(View.VISIBLE);
+			Glide.with(mContext).load(WMSession.getSenderAvatarUrl(currentItem, mAccountName)).into(avatar);
+		}
+		TextView text = (TextView) view.findViewById(R.id.nameTV);
+		if(text != null && currentItem.getSenderName() != null) {
+			text.setVisibility(View.VISIBLE);
+			text.setText(currentItem.getSenderName());
+		}
 		switch (currentItem.getType()) {
 		case WMMessageKindFileFromOperator:
 		case WMMessageKindFileFromVisitor:
@@ -93,7 +106,7 @@ public class MessagesAdapter extends BaseAdapter {
 	}
 
 	private int getLayout(WMMessageKind wmMessageKind) {
-		int layoutId = R.layout.item_system_message;
+		int layoutId;
 		switch (wmMessageKind) {
 		case WMMessageKindOperator:
 			layoutId = R.layout.item_remote_message;

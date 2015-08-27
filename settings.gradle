@@ -1,1 +1,1 @@
-include ':mainActivity'
+include ':mainActivity', ':webimclientsdkandroid'

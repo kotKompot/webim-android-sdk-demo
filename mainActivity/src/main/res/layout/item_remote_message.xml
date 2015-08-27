@@ -4,16 +4,42 @@
     android:layout_height="match_parent"
     android:layout_gravity="start" >
 
-    <TextView
-        android:id="@+id/textViewMessage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="start"
-        android:autoLink="all"
-        android:background="@drawable/bubble_yellow"
-        android:gravity="center"
-        android:linksClickable="true"
-        android:text="a" 
-        android:textIsSelectable="true"/>
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:visibility="gone"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:id="@+id/imageAvatar"/>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bubble_yellow">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:id="@+id/nameTV"/>
+
+            <TextView
+                android:id="@+id/textViewMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:autoLink="all"
+                android:gravity="center"
+                android:linksClickable="true"
+                android:text="a"
+                android:textIsSelectable="true"/>
+        </LinearLayout>
+
+    </LinearLayout>
 
 </FrameLayout>

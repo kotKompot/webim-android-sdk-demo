@@ -114,7 +114,13 @@ public class OfflineChatFragment extends FragmentWithProgressDialog {
         sendButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                sendImage();
+//                sendImage();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        sendImageSync();
+                    }
+                }).start();
                 return true;
             }
         });
@@ -123,7 +129,13 @@ public class OfflineChatFragment extends FragmentWithProgressDialog {
     private void sendMessageAction(String message) {
         if (!TextUtils.isEmpty(message)) {
             sendMessage(message);
-        }
+/*            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    sendMessageSync();
+                }
+            }).start();
+*/        }
     }
 
     private void initEditText(View v) {

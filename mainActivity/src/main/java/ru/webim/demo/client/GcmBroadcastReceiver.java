@@ -13,7 +13,7 @@ public class GcmBroadcastReceiver extends WakefulBroadcastReceiver {
 	@Override
     public void onReceive(Context context, Intent intent) {
         ComponentName comp = new ComponentName(context.getPackageName(), GcmIntentService.class.getName());
-        Log.v("GcmBroadcastReceiver", "New push arrived");
+        Log.e("GcmBroadcastReceiver", "New push arrived");
         // Start the service, keeping the device awake while it is launching.
         startWakefulService(context, (intent.setComponent(comp)));
         setResultCode(Activity.RESULT_OK);

@@ -1,6 +1,7 @@
 package ru.webim.android.fragments;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
@@ -29,7 +30,7 @@ public class OfflineFragment extends FragmentWithProgressDialog {
     private BaseAdapter mChatsAdapter;
     private List<WMChat> mChatsList = new ArrayList<WMChat>();
 
-//******************* BEGINNING OF FRAGMENT METHODS *************************/
+    //******************* BEGINNING OF FRAGMENT METHODS *************************/
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
@@ -46,7 +47,7 @@ public class OfflineFragment extends FragmentWithProgressDialog {
     }
 //******************* END OF FRAGMENT METHODS *************************/
 
-//******************* BEGINNING OF UI METHODS ******************************/
+    //******************* BEGINNING OF UI METHODS ******************************/
     private void initListView(View v) {
         ListView listView = (ListView) v.findViewById(R.id.listViewChats);
         initStartChatButton(v);
@@ -63,6 +64,7 @@ public class OfflineFragment extends FragmentWithProgressDialog {
             }
         });
     }
+
     private void initStartChatButton(View v) {
         Button button = (Button) v.findViewById(R.id.buttonStartOfflineChat);
         button.setOnClickListener(new View.OnClickListener() {
@@ -123,7 +125,7 @@ public class OfflineFragment extends FragmentWithProgressDialog {
     }
 //******************* END OF UI METHODS ******************************/
 
-//******************* BEGINNING OF MAIN INIT WEBIM-SDK-OFFLINE-CHATS METHOD ******************************/
+    //******************* BEGINNING OF MAIN INIT WEBIM-SDK-OFFLINE-CHATS METHOD ******************************/
     private void initWebimOfflineSession() {
         mWMOfflineSession = new WMOfflineSession(getActivity(), "demo", "mobile", "android", true);
         getRequestChatList();
@@ -132,27 +134,33 @@ public class OfflineFragment extends FragmentWithProgressDialog {
 
 
     private void getRequestChatList() {
-        showProgressDialog();
-        mWMOfflineSession.getHistoryForced(false, new WMOfflineSession.OnHistoryResponseListener() {
-
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
             @Override
-            public void onHistoryResponse(boolean successful, WMHistoryChanges changes, WMOfflineSession.WMSessionError errorID) {
-                Log.w(TAG, "onHistoryResponse = " + successful + " error = " + errorID);
-                if (changes != null) {
-                    if (!changes.getNewChats().isEmpty()) {
-                        Log.d(TAG, "New Chats = " + changes.getNewChats().size());
-                    }
+            public void run() {
+                showProgressDialog();
+                mWMOfflineSession.getHistoryForced(false, new WMOfflineSession.OnHistoryResponseListener() {
 
-                    if (!changes.getMessages().isEmpty()) {
-                        Log.d(TAG, "New Messages = " + changes.getMessages().size());
+                    @Override
+                    public void onHistoryResponse(boolean successful, WMHistoryChanges changes, WMOfflineSession.WMSessionError errorID) {
+                        Log.w(TAG, "onHistoryResponse = " + successful + " error = " + errorID);
+                        if (changes != null) {
+                            if (!changes.getNewChats().isEmpty()) {
+                                Log.d(TAG, "New Chats = " + changes.getNewChats().size());
+                            }
+
+                            if (!changes.getMessages().isEmpty()) {
+                                Log.d(TAG, "New Messages = " + changes.getMessages().size());
+                            }
+                            if (!changes.getModifiedChats().isEmpty()) {
+                                Log.d(TAG, "ModifiedChats = " + changes.getModifiedChats().size());
+                            }
+                        }
+                        updateList();
+                        dismissProgressDialog();
                     }
-                    if (!changes.getModifiedChats().isEmpty()) {
-                        Log.d(TAG, "ModifiedChats = " + changes.getModifiedChats().size());
-                    }
-                }
-                updateList();
-                dismissProgressDialog();
+                });
             }
-        });
+        }, 5000);
     }
 }

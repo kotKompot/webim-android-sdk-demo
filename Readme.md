@@ -3,19 +3,31 @@
 A sample for represent interaction with [Webim Mobile SDK].
 
 ### Version
-1.3.6
+2.0.0
 
 ### Installation
 Add to your build.gradle dependencies:
 ```
-compile 'com.webim.sdk:webimclientsdkandroid:1.3.6'
-compile 'com.google.code.gson:gson:2.3'
+compile 'com.webim.sdk:webimclientsdkandroid:2.0.0'
 ```
-
+May require
+```
+compile 'com.google.code.gson:gson:2.3'
+compile 'com.android.support:support-v4:22.0.0'
+compile 'com.google.android.gms:play-services:7.8.0'
+```
+Required permission:
+```
+<uses-permission android:name="android.permission.INTERNET"/>
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+```
 ### Usage
 WebimSdk contains 2 types of session:
- - Online chat (WMSession) 
- - Offline chats (WMOfflineSession) 
+ - Online chat (WMSession) (Supported from android API 10)
+ - Offline chats (WMOfflineSession) (Supported from android API 14)
+
+##### Important!
+Not guaranteed stable work with compileSdkVersion higher than 22
 
 If a user needs an immediate response from an operator, please, use Online chat.
 
@@ -53,9 +65,10 @@ Offline chat can create messages and chats locally, without an internet connecti
 ###Push Notification
 By default, online and offline sessions have GCM interaction.
 
-For enable push-notification system, please add default realization (see android samples and **GcmIntentService** with **GcmBroadcastReceiver**).
+For enable push-notification system, please add [default realization] (see android samples and **GcmIntentService** with **GcmBroadcastReceiver**).
 
 To make WebimSdk collaborate with push call static method _WMSession.onPushMessage_ (see **GcmIntentService**).
+Don't forget about requirement of [permissions for GCM].
 
 ### Todo's
  - Add info about "Synchronized requests" in WMOfflineChats.
@@ -76,3 +89,5 @@ License
     limitations under the License.
 
 [Webim Mobile SDK]:https://webim.ru/help/mobile-sdk/android-sdk-howto/
+[default realization]:https://developer.android.com/intl/ru/google/gcm/client.html
+[permissions for GCM]:https://developer.android.com/intl/ru/google/gcm/client.html#manifest
