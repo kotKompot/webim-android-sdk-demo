@@ -12,6 +12,7 @@ import android.support.v4.app.Fragment;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.webkit.MimeTypeMap;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -114,6 +115,15 @@ public abstract class FragmentWithProgressDialog extends Fragment {
         Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.moon);
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         return new ByteArrayInputStream(stream.toByteArray());
+    }
+
+    public static String getMimeType(String url) {
+        String type = null;
+        String extension = MimeTypeMap.getFileExtensionFromUrl(url);
+        if (extension != null) {
+            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+        }
+        return type;
     }
 
     protected abstract void refresh();

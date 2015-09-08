@@ -3,12 +3,12 @@
 A sample for represent interaction with [Webim Mobile SDK].
 
 ### Version
-2.0.0
+2.0.5
 
 ### Installation
 Add to your build.gradle dependencies:
 ```
-compile 'com.webim.sdk:webimclientsdkandroid:2.0.0'
+compile 'com.webim.sdk:webimclientsdkandroid:2+'
 ```
 May require
 ```
@@ -65,7 +65,8 @@ Offline chat can create messages and chats locally, without an internet connecti
 ###Push Notification
 By default, online and offline sessions have GCM interaction.
 
-For enable push-notification system, please add [default realization] (see android samples and **GcmIntentService** with **GcmBroadcastReceiver**).
+For enable push-notification system, please add [default realization]
+(see android samples and **GcmIntentService** with **GcmBroadcastReceiver**).
 
 To make WebimSdk collaborate with push call static method _WMSession.onPushMessage_ (see **GcmIntentService**).
 Don't forget about requirement of [permissions for GCM].
@@ -89,5 +90,5 @@ License
     limitations under the License.
 
 [Webim Mobile SDK]:https://webim.ru/help/mobile-sdk/android-sdk-howto/
-[default realization]:https://developer.android.com/intl/ru/google/gcm/client.html
-[permissions for GCM]:https://developer.android.com/intl/ru/google/gcm/client.html#manifest
+[default realization]:https://developers.google.com/cloud-messaging/android/client
+[permissions for GCM]:https://developers.google.com/cloud-messaging/android/client#manifest
