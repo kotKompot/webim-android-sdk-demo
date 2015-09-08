@@ -188,11 +188,12 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
         mEditTextMessage = (EditText) v.findViewById(R.id.editTextChatMessage);
         mEditTextMessage.addTextChangedListener(new TextWatcher() {
             public boolean mIsTyping;
-            public WMSession.OnSendTypingStatusListener mListener = new WMSession.OnSendTypingStatusListener() {
+            public WMSession.OnSetComposingMessageListener mListener = new WMSession.OnSetComposingMessageListener() {
                 @Override
-                public void onTypingStatusSend(boolean successful) {
+                public void onSetComposing(boolean successful) {
                     Log.i("onTypingStatusSend", "success - " + successful);
                 }
+
             };
             Handler mHandler = new Handler();
             Runnable mStopPrintRunnable = new Runnable() {
@@ -349,9 +350,9 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
             mWMSession.rateOperator(item.getSenderId(), WMOperatorRate.fromValue((int) (v - 3)), listener);
     }
 
-    private void requestSendTypingStatus(boolean isTyping, WMSession.OnSendTypingStatusListener listener) {
+    private void requestSendTypingStatus(boolean isComposting, WMSession.OnSetComposingMessageListener listener) {
         if (mWMSession != null)
-            mWMSession.sendTypingStatus(isTyping, listener);
+            mWMSession.setComposingMessage(isComposting, listener);
     }
 
 //******************* END OF WEBIM-SDK-ONLINE-CHATS INTERACTION METHODS ******************************/
