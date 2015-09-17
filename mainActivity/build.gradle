@@ -32,7 +32,7 @@ android {
 }
 
 dependencies {
-    compile 'com.webim.sdk:webimclientsdkandroid:2.0.5'
+    compile 'com.webim.sdk:webimclientsdkandroid:2.0.9'
     compile 'com.android.support:appcompat-v7:22.0.0'
     compile 'com.astuetz:pagerslidingtabstrip:1.0.1'
     compile 'com.github.bumptech.glide:glide:3.6.1'

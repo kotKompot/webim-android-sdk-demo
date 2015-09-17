@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.text.Html;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -71,7 +72,7 @@ public class MessagesAdapter extends BaseAdapter {
         switch (currentItem.getType()) {
             case WMMessageKindFileFromOperator:
             case WMMessageKindFileFromVisitor:
-                String url = currentItem.getParams(); //GET URL FORM ONLINE CHAT
+                String url = currentItem.getFileUrl(); //GET URL FORM ONLINE CHAT
                 if (TextUtils.isEmpty(url)) { //This mean url is in offline chat
                     try {
                         url = WMOfflineSession.getUrlFromMessage(currentItem, mAccountName); //GET IMAGE FORM OFFLINE CHAT

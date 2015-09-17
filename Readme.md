@@ -3,7 +3,7 @@
 A sample for represent interaction with [Webim Mobile SDK].
 
 ### Version
-2.0.5
+[ ![Download](https://api.bintray.com/packages/webim/maven/WebimSdkAndroid/images/download.svg) ](https://bintray.com/webim/maven/WebimSdkAndroid/_latestVersion)
 
 ### Installation
 Add to your build.gradle dependencies:

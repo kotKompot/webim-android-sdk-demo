@@ -38,7 +38,6 @@ import ru.webim.android.sdk.WMBaseSession;
 import ru.webim.android.sdk.WMSession;
 import ru.webim.demo.client.R;
 
-
 public class OnlineChatFragment extends FragmentWithProgressDialog {
 
     private WMSession mWMSession;
@@ -135,14 +134,21 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
 
     private void sendMessageAction(String message) {
         if (!TextUtils.isEmpty(message)) {
-            requestSendMessage(message, new WMSession.OnMessageSendListener() {
+            String messageId = requestSendMessage(message, new WMSession.OnMessageSendListener() {
                 @Override
-                public void onMessageSend(boolean success) { // This callback is just approve of success request. It can be null.
-                    // See sessionDidReceiveMessage in WMSessionDelegate
-                    Log.i("onMessageSend", "success - " + success);
+                public void оnSuccess(String messageId) {
+                    Log.i("sendMessage - success", "messageId - " + messageId); // This callback mean that message was successfully uploaded to Webim service.
+                                                                    // You shouldn't to anything with UI here - see didReceiveMessage callback.
                     mEditTextMessage.getText().clear();
                 }
+
+                @Override
+                public void onFailure(String messageId, WMBaseSession.WMSessionError error) {
+                    Log.e("sendMessage - failure", "messageId - " + messageId + ". Error - " + error); // This callback mean that message wasn't uploaded to Webim service.
+                                                                                                        // You can change it's status from "sending" to "not sent"
+                }
             });
+            Log.i("sendMessageAction", "messageId - " + messageId); // You can add your messageItem to UI with status "sending" here. Don't forget to save messageId.
         }
     }
 
@@ -160,12 +166,20 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
         File file = generateFile();
         try {
             FileInputStream fileInputStream = new FileInputStream(file);
-            requestSendFile(fileInputStream, file.getName(), getMimeType(Uri.fromFile(file).toString()), new WMSession.OnFileUploadListener() {
+            String messageId = requestSendFile(fileInputStream, file.getName(), getMimeType(Uri.fromFile(file).toString()), new WMSession.OnFileUploadListener() {
                 @Override
-                public void onFileUploaded(boolean successful) {
-                    Log.i("onFileUploaded", "success - " + successful);
+                public void оnSuccess(String messageId) {
+                    Log.i("sendFile - success", "success - " + messageId); // This callback mean that file was successfully uploaded to Webim service.
+                                                                    // You shouldn't to anything with UI here - see didReceiveMessage callback.
+                }
+
+                @Override
+                public void onFailure(String messageId, WMBaseSession.WMSessionError error) {
+                    Log.i("sendFile - failure", "success - " + messageId + ". error - " + error); // This callback mean that file wasn't uploaded to Webim service.
+                                                                                                    // You can change it's status from "sending" to "not sent"
                 }
             });
+            Log.i("sendFileAction", "created - " + messageId); // You can add your messageItem to UI with status "sending" here. Don't forget to save messageId.
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -191,7 +205,7 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
             public WMSession.OnSetComposingMessageListener mListener = new WMSession.OnSetComposingMessageListener() {
                 @Override
                 public void onSetComposing(boolean successful) {
-                    Log.i("onTypingStatusSend", "success - " + successful);
+                    Log.i("onSetComposing", "success - " + successful);
                 }
 
             };
@@ -316,9 +330,8 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
             mWMSession.closeChat(listener);
     }
 
-    private void requestSendMessage(String message, WMSession.OnMessageSendListener listener) {
-        if (mWMSession != null)
-            mWMSession.sendMessage(message, listener);
+    private String requestSendMessage(String message, WMSession.OnMessageSendListener listener) {
+        return mWMSession.sendMessage(message, listener);
     }
 
     // Request Full data about session from creation. No need to call in standard workflow.
@@ -333,9 +346,8 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
             mWMSession.sendImage(inputStream, WMBaseSession.WMChatAttachmentImageType.WMChatAttachmentImageJPEG, listener);
     }
 
-    private void requestSendFile(InputStream inputStream, String name, String mime, WMSession.OnFileUploadListener listener) {
-        if (mWMSession != null)
-            mWMSession.sendFile(inputStream, name, mime, listener);
+    private String requestSendFile(InputStream inputStream, String name, String mime, WMSession.OnFileUploadListener listener) {
+        return mWMSession.sendFile(inputStream, name, mime, listener);
     }
 
     // Request Last data about session. No need to call in standard workflow.
@@ -371,12 +383,21 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
                 } else {
                     clearMessages();
                     setOperatorParams(null);
-                    requestStartChat(new WMSession.OnInitListener() {
-                        @Override
-                        public void onInit(boolean successful) {
-                            Log.i(TAG, "onInit(...)");
-                        }
-                    });
+                    switch (sessionItem.getOnlineStatus()) {
+                        case WMSessionOnlineStatusOnline:// If onlineStatus is "online" value you can start chat.
+                            requestStartChat(new WMSession.OnInitListener() {
+                                @Override
+                                public void onInit(boolean successful) {
+                                    Log.i(TAG, "onInit(...)");
+                                }
+                            });
+                            break;
+                        default:
+                            if (isVisible()) {
+                                Toast.makeText(getActivity(), R.string.error_no_operators, Toast.LENGTH_LONG).show();
+                            }
+                            break;
+                    }
                 }
             }
 
@@ -405,7 +426,6 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
                             setMessages(chat.getMessages());
                             setOperatorParams(chat.getOperator());
                             break;
-
                         default:
                             clearMessages();
                             break;
@@ -438,7 +458,9 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
 
             @Override
             public void sessionDidReceiveMessage(WMSession session, WMMessage message) {
-                Log.i(TAG, "onMessage(...) - " + message.getMessage());
+                Log.i(TAG, "onMessage(...) - " + message.getMessage() + " id = " + message.getClientSideId()); // You can compare message.getClientSideId with
+                                                                                                                // messageId that was saved in sendMessageAction or sendFileAction methods,
+                                                                                                                // and change message status in UI from "sending" to "delivered".
                 addMessage(message);
             }
 
@@ -466,12 +488,24 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
                 }
             }
 
+            @Override
+            public void sessionDidChangeOnlineStatus(WMSession session, WMSession.WMSessionOnlineStatus onlineStatus) {
+                Log.i("OnlineStatus changed", "onlineStatus = " + onlineStatus); // If onlineStatus changed on "online" value you can start chat.
+                restoreChat(session);
+/*                new Handler().postDelayed(new Runnable() { // For update of onlineStatus you should request fullUpdate.
+                    @Override
+                    public void run() {
+                        startFullUpdate();
+                    }
+                }, 5 * 1000);
+*/            }
+
         };
         createSession(delegate);
     }
 
     private void createSession(WMSession.WMSessionDelegate delegate) {
-        mWMSession = new WMSession(getActivity(), "webimru069", "mobile", delegate);
+        mWMSession = new WMSession(getActivity(), "demo", "mobile", delegate);
         start();
     }
 //******************* END OF MAIN INIT WEBIM-SDK-ONLINE-CHATS METHOD ******************************/
