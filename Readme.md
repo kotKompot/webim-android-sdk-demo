@@ -66,7 +66,7 @@ Offline chat can create messages and chats locally, without an internet connecti
 By default, online and offline sessions have GCM interaction.
 
 For enable push-notification system, please add [default realization]
-(see android samples and **GcmIntentService** with **GcmBroadcastReceiver**).
+See android samples and **GcmIntentService** with **GcmBroadcastReceiver**.
 
 To make WebimSdk collaborate with push call static method _WMSession.onPushMessage_ (see **GcmIntentService**).
 Don't forget about requirement of [permissions for GCM].

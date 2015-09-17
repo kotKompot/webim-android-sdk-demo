@@ -72,14 +72,7 @@ public class MessagesAdapter extends BaseAdapter {
         switch (currentItem.getType()) {
             case WMMessageKindFileFromOperator:
             case WMMessageKindFileFromVisitor:
-                String url = currentItem.getFileUrl(); //GET URL FORM ONLINE CHAT
-                if (TextUtils.isEmpty(url)) { //This mean url is in offline chat
-                    try {
-                        url = WMOfflineSession.getUrlFromMessage(currentItem, mAccountName); //GET IMAGE FORM OFFLINE CHAT
-                    } catch (JSONException e) {
-                        e.printStackTrace(); //Wrong Image Uri.
-                    }
-                }
+                String url = currentItem.getFileUrl();
                 setMessageAsLink(view, messageTextView, currentItem.getMessage(), url);
                 break;
             default:
