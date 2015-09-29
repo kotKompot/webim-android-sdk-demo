@@ -16,6 +16,9 @@ import android.webkit.MimeTypeMap;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 
 import ru.webim.demo.client.R;
@@ -110,11 +113,25 @@ public abstract class FragmentWithProgressDialog extends Fragment {
         }
     }
 
+    @Deprecated
     public static InputStream bitmapToInputStream(Context context) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.moon);
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         return new ByteArrayInputStream(stream.toByteArray());
+    }
+
+    public File generateFile() {
+        File file = new File(getActivity().getFilesDir(), "test_text_file.txt");
+        try {
+            FileWriter writer = new FileWriter(file);
+            writer.append("Test txt file for Webim client demo app");
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return file;
     }
 
     public static String getMimeType(String url) {

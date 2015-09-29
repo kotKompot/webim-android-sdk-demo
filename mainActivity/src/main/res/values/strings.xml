@@ -17,7 +17,7 @@
 	<string name="progress_message">Ожидание ответа от сервера</string>
     <string name="copyright">Предоставлено: webim.ru</string>
     <string name="empty_view_button_text">Начать новый чат сообщением \"Hello\"</string>
-    <string name="chat_title">Офлланй чат от %1$s\nПоследнее сообщение - %2$s</string>
+    <string name="chat_title">Оффлайн чат от %1$s\nПоследнее сообщение - %2$s</string>
     <string name="toast_operator_connected">Присоединился оператор %s</string>
     <string name="toast_no_operator">У сессии нет оператора</string>
     <string name="toast_chat_closed">Чат был закрыт</string>

@@ -1,6 +1,6 @@
 # Webim SDK sample
 
-A sample for represent interaction with [Webim Mobile SDK].
+A sample for represent interaction with [Webim Mobile SDK]. Supported from Android API 15
 
 ### Version
 [ ![Download](https://api.bintray.com/packages/webim/maven/WebimSdkAndroid/images/download.svg) ](https://bintray.com/webim/maven/WebimSdkAndroid/_latestVersion)
@@ -10,11 +10,10 @@ Add to your build.gradle dependencies:
 ```
 compile 'com.webim.sdk:webimclientsdkandroid:2+'
 ```
-May require
+May require (SDK is using this libraries. By default, they will be added to your project automatically, but in special cases you need to add them manually):
 ```
-compile 'com.google.code.gson:gson:2.3'
-compile 'com.android.support:support-v4:22.0.0'
 compile 'com.google.android.gms:play-services:7.8.0'
+compile 'com.squareup.retrofit:retrofit:1.9.0'
 ```
 Required permission:
 ```
@@ -23,11 +22,11 @@ Required permission:
 ```
 ### Usage
 WebimSdk contains 2 types of session:
- - Online chat (WMSession) (Supported from android API 10)
- - Offline chats (WMOfflineSession) (Supported from android API 14)
+ - Online chat (WMSession)
+ - Offline chats (WMOfflineSession)
 
 ##### Important!
-Not guaranteed stable work with compileSdkVersion higher than 22
+Not guaranteed stable work with retrofit 2.0.0-beta or higher.
 
 If a user needs an immediate response from an operator, please, use Online chat.
 

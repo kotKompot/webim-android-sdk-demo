@@ -23,8 +23,6 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +38,7 @@ import ru.webim.demo.client.R;
 
 public class OnlineChatFragment extends FragmentWithProgressDialog {
 
+    public static final String ACCOUNT_NAME = "demo";
     private WMSession mWMSession;
 
     private MessagesAdapter mMessagesAdapter;
@@ -53,7 +52,7 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
     //******************* BEGINNING OF FRAGMENT METHODS *************************/
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_chat, null);
+        View v = inflater.inflate(R.layout.fragment_chat, container, false);
 
         initWebimChat(); // Main part of initialization WebimOnlineChat.
 
@@ -86,7 +85,7 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
         ListView listViewChat = (ListView) v.findViewById(R.id.listViewChat);
         listViewChat.setEmptyView(createEmptyTextView(listViewChat));
 
-        mMessagesAdapter = new MessagesAdapter(getActivity(), mMessages, mWMSession.getUrl(), new View.OnClickListener() {
+        mMessagesAdapter = new MessagesAdapter(getActivity(), mMessages, mWMSession.getServerUrl(), new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (mWMSession != null && view.getTag() instanceof WMMessage) {
@@ -140,6 +139,8 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
                     Log.i("sendMessage - success", "messageId - " + messageId); // This callback mean that message was successfully uploaded to Webim service.
                                                                     // You shouldn't to anything with UI here - see didReceiveMessage callback.
                     mEditTextMessage.getText().clear();
+
+                    requestSendTypingStatus(false, null); // Manually reset of draft after successful message send.
                 }
 
                 @Override
@@ -163,8 +164,8 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
     }
 
     private void sendFileAction() {
-        File file = generateFile();
         try {
+            File file = generateFile();
             FileInputStream fileInputStream = new FileInputStream(file);
             String messageId = requestSendFile(fileInputStream, file.getName(), getMimeType(Uri.fromFile(file).toString()), new WMSession.OnFileUploadListener() {
                 @Override
@@ -185,36 +186,15 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
         }
     }
 
-    public File generateFile() {
-        File file = new File(getActivity().getFilesDir(), "test_text_file.txt");
-        try {
-            FileWriter writer = new FileWriter(file);
-            writer.append("Test txt file for Webim client demo app");
-            writer.flush();
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return file;
-    }
-
     private void initEditText(View v) {
         mEditTextMessage = (EditText) v.findViewById(R.id.editTextChatMessage);
         mEditTextMessage.addTextChangedListener(new TextWatcher() {
-            public boolean mIsTyping;
-            public WMSession.OnSetComposingMessageListener mListener = new WMSession.OnSetComposingMessageListener() {
-                @Override
-                public void onSetComposing(boolean successful) {
-                    Log.i("onSetComposing", "success - " + successful);
-                }
-
-            };
+            public String mLastText;
             Handler mHandler = new Handler();
             Runnable mStopPrintRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    mIsTyping = false;
-                    requestSendTypingStatus(false, mListener);
+                    requestSendTypingStatus(false, mLastText);
                 }
             };
 
@@ -231,11 +211,9 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
             @Override
             public void afterTextChanged(Editable editable) {
                 mHandler.removeCallbacks(mStopPrintRunnable);
-                mHandler.postDelayed(mStopPrintRunnable, 5000);
-                if (!mIsTyping) {
-                    mIsTyping = true;
-                    requestSendTypingStatus(true, mListener);
-                }
+                mHandler.postDelayed(mStopPrintRunnable, 1000 * 5);
+                mLastText = editable.toString();
+                requestSendTypingStatus(true, mLastText);
             }
         });
     }
@@ -244,7 +222,9 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
         if (operatorItem != null) {
             String avatar = operatorItem.getAvatar();
             String name = operatorItem.getFullname();
-            Toast.makeText(getActivity(), getActivity().getString(R.string.toast_operator_connected, name), Toast.LENGTH_LONG).show();
+            if (isVisible()) {
+                Toast.makeText(getActivity(), getActivity().getString(R.string.toast_operator_connected, name), Toast.LENGTH_LONG).show();
+            }
             Log.i("Online Chat", "Operator avatar url - " + avatar);
         } else {
             Toast.makeText(getActivity(), getString(R.string.toast_no_operator), Toast.LENGTH_LONG).show();
@@ -255,7 +235,7 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
     protected void refresh() {
         requestUpdateWithCompletionBlock(new WMSession.WMRefreshFinishDelegate() {
             @Override
-            public void sessionDidRefresh() {
+            public void sessionDidRefresh(boolean success, WMBaseSession.WMSessionError type) {
                 Log.i("sessionDidRefresh", "Last data was received");
             }
         });
@@ -353,8 +333,8 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
     // Request Last data about session. No need to call in standard workflow.
     private boolean requestUpdateWithCompletionBlock(WMSession.WMRefreshFinishDelegate delegate) {
         if (mWMSession != null)
-            return mWMSession.refreshSessionWithCompletionBlock(delegate);
-        return false;
+            mWMSession.refreshSessionWithCompletionBlock(delegate);
+        return true;
     }
 
     private void requestRateOperator(WMMessage item, float v, WMSession.OnRateOperationListener listener) {
@@ -362,9 +342,9 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
             mWMSession.rateOperator(item.getSenderId(), WMOperatorRate.fromValue((int) (v - 3)), listener);
     }
 
-    private void requestSendTypingStatus(boolean isComposting, WMSession.OnSetComposingMessageListener listener) {
+    private void requestSendTypingStatus(boolean isComposting, String draftMessage) {
         if (mWMSession != null)
-            mWMSession.setComposingMessage(isComposting, listener);
+            mWMSession.setComposingMessage(isComposting, draftMessage);
     }
 
 //******************* END OF WEBIM-SDK-ONLINE-CHATS INTERACTION METHODS ******************************/
@@ -438,16 +418,18 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
 
             @Override
             public void sessionDidChangeChatStatus(WMSession session) {
-                switch (session.getChat().getState()) {
-                    case WMChatStateClosed:
-                    case WMChatStateClosedByVisitor:
-                        Toast.makeText(getActivity(), getString(R.string.toast_chat_closed), Toast.LENGTH_LONG).show();
-                        break;
-                    default:
-                        Toast.makeText(getActivity(), getString(R.string.toast_chat_opened), Toast.LENGTH_LONG).show();
-                        break;
+                if (isVisible()) {
+                    switch (session.getChat().getState()) {
+                        case WMChatStateClosed:
+                        case WMChatStateClosedByVisitor:
+                            Toast.makeText(getActivity(), getString(R.string.toast_chat_closed), Toast.LENGTH_LONG).show();
+                            break;
+                        default:
+                            Toast.makeText(getActivity(), getString(R.string.toast_chat_opened), Toast.LENGTH_LONG).show();
+                            break;
+                    }
+                    dismissProgressDialog();
                 }
-                dismissProgressDialog();
             }
 
             @Override
@@ -500,12 +482,17 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
                 }, 5 * 1000);
 */            }
 
+            @Override
+            public void sessionDidChangeOperatorTyping(WMSession session, boolean isTyping) {
+                Log.i("Operator typing", "isTyping = " + isTyping); // If onlineStatus changed on "online" value you can start chat.
+            }
+
         };
         createSession(delegate);
     }
 
     private void createSession(WMSession.WMSessionDelegate delegate) {
-        mWMSession = new WMSession(getActivity(), "demo", "mobile", delegate);
+        mWMSession = new WMSession(getActivity(), ACCOUNT_NAME, "mobile", delegate, null, true);
         start();
     }
 //******************* END OF MAIN INIT WEBIM-SDK-ONLINE-CHATS METHOD ******************************/

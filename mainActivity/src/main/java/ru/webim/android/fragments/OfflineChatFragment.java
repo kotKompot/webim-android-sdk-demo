@@ -1,5 +1,6 @@
 package ru.webim.android.fragments;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.NetworkOnMainThreadException;
@@ -12,6 +13,9 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 import ru.webim.android.adapters.MessagesAdapter;
@@ -25,7 +29,8 @@ import ru.webim.demo.client.R;
 
 public class OfflineChatFragment extends FragmentWithProgressDialog {
     private static final String TAG = "OfflineChatFragment";
-    private static final long REFRESH_PERIOD = 10000;
+    private static final long REFRESH_PERIOD = 5000;
+    private static final boolean ENABLE_ASYNC_REQUESTS = true; // If false will enable sync SDK requests
     private WMChat mChat;
     private WMOfflineSession mWMSession;
 
@@ -40,7 +45,16 @@ public class OfflineChatFragment extends FragmentWithProgressDialog {
         @Override
         public void run() {
             if (mRefreshHandler != null) {
-                getHistory();
+                if (ENABLE_ASYNC_REQUESTS) {
+                    getHistory();
+                } else {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            getHistorySync();
+                        }
+                    }).start();
+                }
                 markChatAsRead();
                 mRefreshHandler.postDelayed(this, REFRESH_PERIOD);
             }
@@ -50,7 +64,7 @@ public class OfflineChatFragment extends FragmentWithProgressDialog {
     //******************* BEGINNING OF FRAGMENT METHODS *************************/
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_chat, null);
+        View rootView = inflater.inflate(R.layout.fragment_chat, container, false);
         initViews(rootView);
         return rootView;
     }
@@ -85,7 +99,7 @@ public class OfflineChatFragment extends FragmentWithProgressDialog {
         mListViewChat = (ListView) v.findViewById(R.id.listViewChat);
         mListViewChat.setEmptyView(createEmptyTextView());
 
-        mMessagesAdapter = new MessagesAdapter(getActivity(), mMessages, mWMSession.getAccountName());
+        mMessagesAdapter = new MessagesAdapter(getActivity(), mMessages, mWMSession.getServerUrl());
         mListViewChat.setAdapter(mMessagesAdapter);
         mMessagesAdapter.notifyDataSetChanged();
 
@@ -114,13 +128,16 @@ public class OfflineChatFragment extends FragmentWithProgressDialog {
         sendButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-//                sendImage();
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        sendImageSync();
-                    }
-                }).start();
+                if (ENABLE_ASYNC_REQUESTS) {
+                    sendFile();
+                } else {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            sendFileSync();
+                        }
+                    }).start();
+                }
                 return true;
             }
         });
@@ -128,14 +145,17 @@ public class OfflineChatFragment extends FragmentWithProgressDialog {
 
     private void sendMessageAction(String message) {
         if (!TextUtils.isEmpty(message)) {
-            sendMessage(message);
-/*            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    sendMessageSync();
-                }
-            }).start();
-*/        }
+            if (ENABLE_ASYNC_REQUESTS) {
+                sendMessage(message);
+            } else {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        sendMessageSync();
+                    }
+                }).start();
+            }
+        }
     }
 
     private void initEditText(View v) {
@@ -151,39 +171,49 @@ public class OfflineChatFragment extends FragmentWithProgressDialog {
     protected void discard() {
         deleteChat(mChat);
     }
+
+    private void makeActionWithChanges(WMHistoryChanges changes) {
+        if (changes != null) {
+            if (!changes.getNewChats().isEmpty()) {
+                Log.e(TAG, "New Chats = " + changes.getNewChats().size());
+            }
+
+            if (!changes.getMessages().isEmpty()) {
+                Log.e(TAG, "New Messages = " + changes.getMessages().size());
+            }
+            if (!changes.getModifiedChats().isEmpty()) {
+                Log.e(TAG, "ModifiedChats = " + changes.getModifiedChats().size());
+            }
+        }
+        if (isVisible()) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    for (WMChat chat : mWMSession.getOfflineChats()) {
+                        if (chat.getId().equals(mChat.getId())) {
+                            mChat = chat;
+                            fillListView();
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+    }
 //******************* END OF UI METHODS ******************************/
 
     //******************* BEGINNING OF WEBIM-SDK-OFFLINE-CHATS INTERACTION METHODS ******************************/
     private void getHistory() {
         mWMSession.getHistoryForced(false, new WMOfflineSession.OnHistoryResponseListener() {
-
             @Override
             public void onHistoryResponse(boolean successful, WMHistoryChanges changes, WMBaseSession.WMSessionError errorID) {
                 Log.w(TAG, "onHistoryResponse");
-                if (changes != null) {
-                    if (!changes.getNewChats().isEmpty()) {
-                        Log.e(TAG, "New Chats = " + changes.getNewChats().size());
-                    }
-
-                    if (!changes.getMessages().isEmpty()) {
-                        Log.e(TAG, "New Messages = " + changes.getMessages().size());
-                    }
-                    if (!changes.getModifiedChats().isEmpty()) {
-                        Log.e(TAG, "ModifiedChats = " + changes.getModifiedChats().size());
-                    }
-                }
-                ;
-                for (WMChat chat : mWMSession.getOfflineChats()) {
-                    if (chat.getId().equals(mChat.getId())) {
-                        mChat = chat;
-                        fillListView();
-                        break;
-                    }
-                }
+                makeActionWithChanges(changes);
             }
         });
     }
 
+    @Deprecated
     private void sendImage() {
         mWMSession.sendImage(bitmapToInputStream(getActivity()), WMOfflineSession.WMChatAttachmentImageType.WMChatAttachmentImageJPEG, mChat, null, null, new WMOfflineSession.OnMessageSendListener() {
             @Override
@@ -191,6 +221,22 @@ public class OfflineChatFragment extends FragmentWithProgressDialog {
                 Log.d("Image", "onMessageSend " + successful + " " + error);
             }
         });
+    }
+
+    private void sendFile() {
+        File file = generateFile();
+        FileInputStream fileInputStream;
+        try {
+            fileInputStream = new FileInputStream(file);
+            mWMSession.sendFile(fileInputStream, file.getName(), getMimeType(Uri.fromFile(file).toString()), mChat, null, null, new WMOfflineSession.OnMessageSendListener() {
+                @Override
+                public void onMessageSend(boolean successful, WMChat chat, WMMessage mwssage, WMOfflineSession.WMSessionError error) {
+                    Log.d("Image", "onMessageSend " + successful + " " + error);
+                }
+            });
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     private void markChatAsRead() {
@@ -227,7 +273,16 @@ public class OfflineChatFragment extends FragmentWithProgressDialog {
                 mMessages.add(mwssage);
                 mMessagesAdapter.notifyDataSetChanged();
                 mEditTextMessage.getText().clear();
-                getHistory();
+                if (ENABLE_ASYNC_REQUESTS) {
+                    getHistory();
+                } else {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            getHistorySync();
+                        }
+                    }).start();
+                }
                 Log.e(TAG, "onMessageSend");
             }
         });
@@ -260,6 +315,7 @@ public class OfflineChatFragment extends FragmentWithProgressDialog {
     public void getHistorySync() throws NetworkOnMainThreadException {
         try {
             WMHistoryChanges changes = mWMSession.getHistoryForcedSync(false);
+            makeActionWithChanges(changes);
         } catch (WMException wmException) {
             wmException.printStackTrace();
         }
@@ -268,17 +324,33 @@ public class OfflineChatFragment extends FragmentWithProgressDialog {
     public void sendMessageSync() throws NetworkOnMainThreadException {
         try {
             WMMessage message = mWMSession.sendMessageSync("Sync Hello", mChat, null, null);
+            //Add message to UI without waiting of History changes
         } catch (WMException wmException) {
             wmException.printStackTrace();
         }
     }
 
+    @Deprecated
     public void sendImageSync() throws NetworkOnMainThreadException {
         try {
-            WMMessage changes = mWMSession.sendImageSync(bitmapToInputStream(getActivity()),
+            WMMessage message = mWMSession.sendImageSync(bitmapToInputStream(getActivity()),
                     WMBaseSession.WMChatAttachmentImageType.WMChatAttachmentImageJPEG, mChat, null, null);
+            //Add message to UI without waiting of History changes
         } catch (WMException wmException) {
             wmException.printStackTrace();
+        }
+    }
+
+    public void sendFileSync() throws NetworkOnMainThreadException {
+        try {
+            File file = generateFile();
+            FileInputStream fileInputStream = new FileInputStream(file);
+            WMMessage message = mWMSession.sendFileSync(fileInputStream, file.getName(), getMimeType(Uri.fromFile(file).toString()), mChat, null, null);
+            //Add message to UI without waiting of History changes
+        } catch (WMException wmException) {
+            wmException.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
     }
 //******************* END OF WEBIM-SDK-OFFLINE-CHATS SYNC INTERACTION METHODS ******************************/

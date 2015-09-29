@@ -5,9 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.text.Html;
-import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -18,32 +16,29 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
-import org.json.JSONException;
-
 import java.util.ArrayList;
 
 import ru.webim.android.items.WMMessage;
 import ru.webim.android.items.WMMessage.WMMessageKind;
-import ru.webim.android.sdk.WMOfflineSession;
 import ru.webim.android.sdk.WMSession;
 import ru.webim.demo.client.R;
 
 public class MessagesAdapter extends BaseAdapter {
-    private final String mAccountName;
+    private final String mServerUrl;
     private LayoutInflater mInflater;
     private ArrayList<WMMessage> mList = new ArrayList<WMMessage>();
     private Context mContext;
     private OnClickListener mOnImageClickListener;
 
-    public MessagesAdapter(Context context, ArrayList<WMMessage> arrayList, String accountName) {
-        this (context,arrayList,accountName, null);
+    public MessagesAdapter(Context context, ArrayList<WMMessage> arrayList, String serverUrl) {
+        this (context,arrayList,serverUrl, null);
     }
 
-    public MessagesAdapter(Context context, ArrayList<WMMessage> arrayList, String accountName, OnClickListener listener) {
+    public MessagesAdapter(Context context, ArrayList<WMMessage> arrayList, String serverUrl, OnClickListener listener) {
         mContext = context;
         mList = arrayList;
         mInflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mAccountName = accountName;
+        mServerUrl = serverUrl;
         mOnImageClickListener = listener;
     }
 
@@ -58,7 +53,7 @@ public class MessagesAdapter extends BaseAdapter {
         ImageView avatar = (ImageView) view.findViewById(R.id.imageAvatar);
         if (avatar != null && currentItem.getSenderAvatarUrl() != null) {
             avatar.setVisibility(View.VISIBLE);
-            Glide.with(mContext).load(WMSession.getSenderAvatarUrl(currentItem, mAccountName)).into(avatar);
+            Glide.with(mContext).load(WMSession.getSenderAvatarUrl(currentItem, mServerUrl)).into(avatar);
             avatar.setTag(currentItem);
             if (mOnImageClickListener != null) {
                 avatar.setOnClickListener(mOnImageClickListener);
