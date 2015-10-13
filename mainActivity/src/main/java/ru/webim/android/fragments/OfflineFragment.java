@@ -1,6 +1,7 @@
 package ru.webim.android.fragments;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
@@ -24,8 +25,8 @@ import ru.webim.android.sdk.WMOfflineSession;
 import ru.webim.demo.client.R;
 
 public class OfflineFragment extends FragmentWithProgressDialog {
-    private static final String TAG = "OfflineFragment";
     public static final String ACCOUNT_NAME = "demo";
+    private static final String TAG = "OfflineFragment";
     private WMOfflineSession mWMOfflineSession;
     private BaseAdapter mChatsAdapter;
     private List<WMChat> mChatsList = new ArrayList<WMChat>();
@@ -127,34 +128,44 @@ public class OfflineFragment extends FragmentWithProgressDialog {
 
     //******************* BEGINNING OF MAIN INIT WEBIM-SDK-OFFLINE-CHATS METHOD ******************************/
     private void initWebimOfflineSession() {
-        mWMOfflineSession = new WMOfflineSession(getActivity(), ACCOUNT_NAME, "mobile", "android", true);
-        getRequestChatList();
+        new Handler().postDelayed(new Runnable() {
+            // Hander need for correct init both sessions in current sample (online and offline).
+            // If you want to use only offline session you can use it without handler (same for only online session).
+            // Also, if you want to use both sessions you can use serial init (example in OnlineChatFragment, method "createSession").
+            @Override
+            public void run() {
+                mWMOfflineSession = new WMOfflineSession(getActivity(), ACCOUNT_NAME, "mobile", "android", true);
+                getRequestChatList();
+            }
+        }, 5000);
     }
 //******************* END OF MAIN INIT WEBIM-SDK-OFFLINE-CHATS METHOD ******************************/
 
 
     private void getRequestChatList() {
         showProgressDialog();
-        mWMOfflineSession.getHistoryForced(false, new WMOfflineSession.OnHistoryResponseListener() {
+        if (mWMOfflineSession != null) {
+            mWMOfflineSession.getHistoryForced(false, new WMOfflineSession.OnHistoryResponseListener() {
 
-            @Override
-            public void onHistoryResponse(boolean successful, WMHistoryChanges changes, WMOfflineSession.WMSessionError errorID) {
-                Log.w(TAG, "onHistoryResponse = " + successful + " error = " + errorID);
-                if (changes != null) {
-                    if (!changes.getNewChats().isEmpty()) {
-                        Log.d(TAG, "New Chats = " + changes.getNewChats().size());
-                    }
+                @Override
+                public void onHistoryResponse(boolean successful, WMHistoryChanges changes, WMOfflineSession.WMSessionError errorID) {
+                    Log.w(TAG, "onHistoryResponse = " + successful + " error = " + errorID);
+                    if (changes != null) {
+                        if (!changes.getNewChats().isEmpty()) {
+                            Log.d(TAG, "New Chats = " + changes.getNewChats().size());
+                        }
 
-                    if (!changes.getMessages().isEmpty()) {
-                        Log.d(TAG, "New Messages = " + changes.getMessages().size());
+                        if (!changes.getMessages().isEmpty()) {
+                            Log.d(TAG, "New Messages = " + changes.getMessages().size());
+                        }
+                        if (!changes.getModifiedChats().isEmpty()) {
+                            Log.d(TAG, "ModifiedChats = " + changes.getModifiedChats().size());
+                        }
                     }
-                    if (!changes.getModifiedChats().isEmpty()) {
-                        Log.d(TAG, "ModifiedChats = " + changes.getModifiedChats().size());
-                    }
+                    updateList();
+                    dismissProgressDialog();
                 }
-                updateList();
-                dismissProgressDialog();
-            }
-        });
+            });
+        }
     }
 }

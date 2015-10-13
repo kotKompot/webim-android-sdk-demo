@@ -137,7 +137,7 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
                 @Override
                 public void оnSuccess(String messageId) {
                     Log.i("sendMessage - success", "messageId - " + messageId); // This callback mean that message was successfully uploaded to Webim service.
-                                                                    // You shouldn't to anything with UI here - see didReceiveMessage callback.
+                    // You shouldn't to anything with UI here - see didReceiveMessage callback.
                     mEditTextMessage.getText().clear();
 
                     requestSendTypingStatus(false, null); // Manually reset of draft after successful message send.
@@ -146,7 +146,7 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
                 @Override
                 public void onFailure(String messageId, WMBaseSession.WMSessionError error) {
                     Log.e("sendMessage - failure", "messageId - " + messageId + ". Error - " + error); // This callback mean that message wasn't uploaded to Webim service.
-                                                                                                        // You can change it's status from "sending" to "not sent"
+                    // You can change it's status from "sending" to "not sent"
                 }
             });
             Log.i("sendMessageAction", "messageId - " + messageId); // You can add your messageItem to UI with status "sending" here. Don't forget to save messageId.
@@ -171,13 +171,13 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
                 @Override
                 public void оnSuccess(String messageId) {
                     Log.i("sendFile - success", "success - " + messageId); // This callback mean that file was successfully uploaded to Webim service.
-                                                                    // You shouldn't to anything with UI here - see didReceiveMessage callback.
+                    // You shouldn't to anything with UI here - see didReceiveMessage callback.
                 }
 
                 @Override
                 public void onFailure(String messageId, WMBaseSession.WMSessionError error) {
                     Log.i("sendFile - failure", "success - " + messageId + ". error - " + error); // This callback mean that file wasn't uploaded to Webim service.
-                                                                                                    // You can change it's status from "sending" to "not sent"
+                    // You can change it's status from "sending" to "not sent"
                 }
             });
             Log.i("sendFileAction", "created - " + messageId); // You can add your messageItem to UI with status "sending" here. Don't forget to save messageId.
@@ -419,7 +419,9 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
             @Override
             public void sessionDidChangeChatStatus(WMSession session) {
                 if (isVisible()) {
-                    switch (session.getChat().getState()) {
+                    if (session.getChat() == null) {
+                        Toast.makeText(getActivity(), getString(R.string.toast_chat_closed), Toast.LENGTH_LONG).show();
+                    } else switch (session.getChat().getState()) {
                         case WMChatStateClosed:
                         case WMChatStateClosedByVisitor:
                             Toast.makeText(getActivity(), getString(R.string.toast_chat_closed), Toast.LENGTH_LONG).show();
@@ -441,8 +443,8 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
             @Override
             public void sessionDidReceiveMessage(WMSession session, WMMessage message) {
                 Log.i(TAG, "onMessage(...) - " + message.getMessage() + " id = " + message.getClientSideId()); // You can compare message.getClientSideId with
-                                                                                                                // messageId that was saved in sendMessageAction or sendFileAction methods,
-                                                                                                                // and change message status in UI from "sending" to "delivered".
+                // messageId that was saved in sendMessageAction or sendFileAction methods,
+                // and change message status in UI from "sending" to "delivered".
                 addMessage(message);
             }
 
@@ -480,7 +482,8 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
                         startFullUpdate();
                     }
                 }, 5 * 1000);
-*/            }
+*/
+            }
 
             @Override
             public void sessionDidChangeOperatorTyping(WMSession session, boolean isTyping) {
@@ -493,6 +496,19 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
 
     private void createSession(WMSession.WMSessionDelegate delegate) {
         mWMSession = new WMSession(getActivity(), ACCOUNT_NAME, "mobile", delegate, null, true);
+/*        mWMSession.setOnRegisteredInGcmListener(new WMSession.OnGCMRegisterListener() { // In Case of using offline session with online session we recomend init it in onRegister callback;
+            @Override
+            public void onRegister() {
+                final WMOfflineSession session = new WMOfflineSession(getActivity(), ACCOUNT_NAME, "mobile", "android", true);
+                session.getHistoryForced(false, new WMOfflineSession.OnHistoryResponseListener() {
+                    @Override
+                    public void onHistoryResponse(boolean successful, WMHistoryChanges changes, WMBaseSession.WMSessionError error) {
+                        Log.i("onHistoryResponse", session.getOfflineChats().toString());
+                    }
+                });
+            }
+        });
+*/
         start();
     }
 //******************* END OF MAIN INIT WEBIM-SDK-ONLINE-CHATS METHOD ******************************/
