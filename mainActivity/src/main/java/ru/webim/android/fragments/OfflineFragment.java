@@ -20,7 +20,9 @@ import ru.webim.android.adapters.ChatsAdapter;
 import ru.webim.android.items.WMChat;
 import ru.webim.android.items.WMHistoryChanges;
 import ru.webim.android.items.WMMessage;
+import ru.webim.android.sdk.OnHistoryResponseListener;
 import ru.webim.android.sdk.WMBaseSession;
+import ru.webim.android.sdk.WMException;
 import ru.webim.android.sdk.WMOfflineSession;
 import ru.webim.demo.client.R;
 
@@ -30,6 +32,7 @@ public class OfflineFragment extends FragmentWithProgressDialog {
     private WMOfflineSession mWMOfflineSession;
     private BaseAdapter mChatsAdapter;
     private List<WMChat> mChatsList = new ArrayList<WMChat>();
+    private boolean mIsAsync = false;
 
     //******************* BEGINNING OF FRAGMENT METHODS *************************/
     @Override
@@ -82,6 +85,42 @@ public class OfflineFragment extends FragmentWithProgressDialog {
                         }
                     }
                 });
+            }
+        });
+        button.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                showProgressDialog();
+                if (mIsAsync) {
+                    mWMOfflineSession.sendFile(bitmapToInputStream(getActivity()), "moon.jpg", "image/jpeg", null, null, null, new WMOfflineSession.OnMessageSendListener() {
+                        @Override
+                        public void onMessageSend(boolean successful, WMChat chat, WMMessage message, WMBaseSession.WMSessionError error) {
+                            if (successful) {
+                                getRequestChatList();
+                            } else {
+                                dismissProgressDialog();
+                            }
+                        }
+                    });
+                } else {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                mWMOfflineSession.sendFileSync(bitmapToInputStream(getActivity()), "moon.jpg", "image/jpeg", null, null, null);
+                            } catch (WMException e) {
+                                e.printStackTrace();
+                            }
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    getRequestChatList();
+                                }
+                            });
+                        }
+                    }).start();
+                }
+                return true;
             }
         });
     }
@@ -145,7 +184,7 @@ public class OfflineFragment extends FragmentWithProgressDialog {
     private void getRequestChatList() {
         showProgressDialog();
         if (mWMOfflineSession != null) {
-            mWMOfflineSession.getHistoryForced(false, new WMOfflineSession.OnHistoryResponseListener() {
+            mWMOfflineSession.getHistoryForced(false, new OnHistoryResponseListener() {
 
                 @Override
                 public void onHistoryResponse(boolean successful, WMHistoryChanges changes, WMOfflineSession.WMSessionError errorID) {

@@ -1,7 +1,11 @@
 package ru.webim.android.fragments;
 
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -34,6 +38,7 @@ import ru.webim.android.items.WMOperator;
 import ru.webim.android.items.WMOperatorRate;
 import ru.webim.android.sdk.WMBaseSession;
 import ru.webim.android.sdk.WMSession;
+import ru.webim.demo.client.GcmInstanceIDListenerService;
 import ru.webim.demo.client.R;
 
 public class OnlineChatFragment extends FragmentWithProgressDialog {
@@ -48,6 +53,16 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
 
     private AlertDialog mAlertDialogClose;
     private AlertDialog mAlertDialogStart;
+
+
+    private final BroadcastReceiver mUpdateTokenReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (mWMSession != null) {
+                mWMSession.updatePushToken();
+            }
+        }
+    };
 
     //******************* BEGINNING OF FRAGMENT METHODS *************************/
     @Override
@@ -66,12 +81,28 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
     }
 
     @Override
-    public void onDestroy() {
+    public void onStop() {
+        try {
+            getActivity().unregisterReceiver(mUpdateTokenReceiver);
+        } catch (Exception ignore) {
+        }
         if (mWMSession != null)
             mWMSession.stopSession();
-        super.onDestroy();
+        super.onStop();
     }
-//******************* END OF FRAGMENT METHODS *************************/
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (mWMSession != null)
+            mWMSession.startSession();
+
+        try {
+            getActivity().registerReceiver(mUpdateTokenReceiver, new IntentFilter(GcmInstanceIDListenerService.ACTION_TOKEN_REFRESH));
+        } catch (Exception ignore) {
+        }
+    }
+    //******************* END OF FRAGMENT METHODS *************************/
 
 
     private void fillListView() {
@@ -295,11 +326,6 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
             mMessagesAdapter.notifyDataSetChanged();
     }
 
-    private void start() {
-        if (mWMSession != null)
-            mWMSession.startSession();
-    }
-
     private void requestStartChat(WMSession.OnInitListener listener) {
         if (mWMSession != null)
             mWMSession.startChat(listener);
@@ -496,11 +522,12 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
 
     private void createSession(WMSession.WMSessionDelegate delegate) {
         mWMSession = new WMSession(getActivity(), ACCOUNT_NAME, "mobile", delegate, null, true);
-/*        mWMSession.setOnRegisteredInGcmListener(new WMSession.OnGCMRegisterListener() { // In Case of using offline session with online session we recomend init it in onRegister callback;
+/*           mWMSession = new WMSession(getActivity(), ACCOUNT_NAME, "mobile", delegate, null, true,
+                                        new WMSession.OnGCMRegisterListener() { // In Case of using offline session with online session we recommend init it in onRegister callback;
             @Override
             public void onRegister() {
                 final WMOfflineSession session = new WMOfflineSession(getActivity(), ACCOUNT_NAME, "mobile", "android", true);
-                session.getHistoryForced(false, new WMOfflineSession.OnHistoryResponseListener() {
+                session.getHistoryForced(false, new OnHistoryResponseListener() {
                     @Override
                     public void onHistoryResponse(boolean successful, WMHistoryChanges changes, WMBaseSession.WMSessionError error) {
                         Log.i("onHistoryResponse", session.getOfflineChats().toString());
@@ -509,7 +536,6 @@ public class OnlineChatFragment extends FragmentWithProgressDialog {
             }
         });
 */
-        start();
     }
 //******************* END OF MAIN INIT WEBIM-SDK-ONLINE-CHATS METHOD ******************************/
 

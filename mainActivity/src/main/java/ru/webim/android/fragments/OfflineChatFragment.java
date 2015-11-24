@@ -22,6 +22,7 @@ import ru.webim.android.adapters.MessagesAdapter;
 import ru.webim.android.items.WMChat;
 import ru.webim.android.items.WMHistoryChanges;
 import ru.webim.android.items.WMMessage;
+import ru.webim.android.sdk.OnHistoryResponseListener;
 import ru.webim.android.sdk.WMBaseSession;
 import ru.webim.android.sdk.WMException;
 import ru.webim.android.sdk.WMOfflineSession;
@@ -204,7 +205,7 @@ public class OfflineChatFragment extends FragmentWithProgressDialog {
 
     //******************* BEGINNING OF WEBIM-SDK-OFFLINE-CHATS INTERACTION METHODS ******************************/
     private void getHistory() {
-        mWMSession.getHistoryForced(false, new WMOfflineSession.OnHistoryResponseListener() {
+        mWMSession.getHistoryForced(false, new OnHistoryResponseListener() {
             @Override
             public void onHistoryResponse(boolean successful, WMHistoryChanges changes, WMBaseSession.WMSessionError errorID) {
                 Log.w(TAG, "onHistoryResponse");

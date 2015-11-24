@@ -12,7 +12,7 @@ compile 'com.webim.sdk:webimclientsdkandroid:2+'
 ```
 May require (SDK is using this libraries. By default, they will be added to your project automatically, but in special cases you need to add them manually):
 ```
-compile 'com.google.android.gms:play-services:7.8.0'
+compile 'com.google.android.gms:play-services-gcm:7.8.0'
 compile 'com.squareup.retrofit:retrofit:1.9.0'
 ```
 Required permission:
